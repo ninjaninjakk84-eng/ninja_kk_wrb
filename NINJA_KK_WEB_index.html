@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NINJA KK WEB - FF Practice Zone</title>
+<style>
+:root{--bg:#10131b;--panel:#1b2230;--accent:#39d98a;--text:#f4f7fb;--muted:#aab4c4}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;padding:18px}
+header{text-align:center;padding:12px}h1{margin:4px;color:var(--accent)}p{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid #303b50;border-radius:16px;padding:16px;margin:14px 0}
+button,select{background:var(--accent);border:0;border-radius:10px;padding:11px 14px;font-weight:bold;color:#07150e;margin:5px}
+button.secondary{background:#35445c;color:white}
+.stats{display:flex;justify-content:space-around;text-align:center;gap:8px}.stats strong{display:block;font-size:24px;color:var(--accent)}
+#arena{height:300px;background:#0a0d13;border:2px dashed #52617a;border-radius:14px;position:relative;overflow:hidden;touch-action:pan-y}
+.target{width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,#ff4d5e 35%,#9b1024 70%);position:absolute;display:none;box-shadow:0 0 18px #ff4d5e}
+#ring{width:90px;height:90px;border:4px solid var(--accent);border-radius:50%;position:absolute;right:10px;bottom:10px;pointer-events:none}
+label{display:block;margin:12px 0 5px;color:#e3eaf4}input[type=range]{width:100%;accent-color:var(--accent)}
+small{color:var(--muted)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:430px){.grid{grid-template-columns:1fr}.stats strong{font-size:20px}}
+</style>
+</head>
+<body>
+<header><h1>🥷 NINJA KK WEB</h1><p>Personal FF Practice Zone — fair-play training only</p></header>
+<div class="panel">
+<div class="stats"><div>TIME<strong id="time">01:00</strong></div><div>SCORE<strong id="score">0</strong></div><div>BEST<strong id="best">0</strong></div></div>
+<div class="grid" style="margin-top:12px">
+<label>Practice mode<select id="mode"><option value="head">Headshot Tap</option><option value="drag">Drag Aim</option><option value="reflex">Reflex</option></select></label>
+<label>Round length<select id="duration"><option value="30">30 seconds</option><option value="60" selected>1 minute</option><option value="180">3 minutes</option><option value="300">5 minutes</option><option value="600">10 minutes</option></select></label>
+</div>
+<button id="start">Start Practice</button><button id="stop" class="secondary">Stop</button>
+<label><input id="sound" type="checkbox" checked> Sound effects</label>
+</div>
+<div class="panel"><h3>Practice Area</h3><div id="arena"><div id="target" class="target"></div><div id="ring"></div></div><p id="message">Press Start Practice to begin.</p></div>
+<div class="panel"><h3>Sensitivity Notes (0–200)</h3><small>These sliders save your preferred notes in this browser. They do not change Free Fire settings.</small>
+<div id="sliders"></div>
+</div>
+<div class="panel"><h3>Fair-play reminder</h3><p>Use normal in-game controls and the official training mode. This trainer does not connect to or modify Free Fire.</p></div>
+<script>
+const names=['General','Red Dot','2x Scope','4x Scope','Sniper Scope','Free Look'];
+const wrap=document.getElementById('sliders');
+names.forEach((n,i)=>{let key='ninja_sens_'+i;let val=localStorage.getItem(key)||'100';let box=document.createElement('div');box.innerHTML=`<label>${n}: <b id="v${i}">${val}</b></label><input type="range" min="0" max="200" value="${val}" id="s${i}">`;wrap.appendChild(box);box.querySelector('input').addEventListener('input',e=>{document.getElementById('v'+i).textContent=e.target.value;localStorage.setItem(key,e.target.value)});});
+let score=0,remaining=60,timer=null,running=false;const arena=document.getElementById('arena'),target=document.getElementById('target');
+let best=Number(localStorage.getItem('ninja_best')||0);document.getElementById('best').textContent=best;
+function place(){let maxX=arena.clientWidth-58,maxY=arena.clientHeight-58;target.style.left=Math.max(0,Math.random()*maxX)+'px';target.style.top=Math.max(0,Math.random()*maxY)+'px';target.style.display='block'}
+function update(){document.getElementById('score').textContent=score;document.getElementById('time').textContent=String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0')}
+function beep(){if(!document.getElementById('sound').checked)return;try{let c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=660;g.gain.value=.04;o.start();o.stop(c.currentTime+.07)}catch(e){}}
+function end(){clearInterval(timer);timer=null;running=false;target.style.display='none';if(score>best){best=score;localStorage.setItem('ninja_best',best);document.getElementById('best').textContent=best}document.getElementById('message').textContent='Round complete! Your score: '+score+'.'}
+document.getElementById('start').onclick=()=>{clearInterval(timer);score=0;remaining=Number(document.getElementById('duration').value);running=true;update();place();document.getElementById('message').textContent='Practice started! Tap the target.';timer=setInterval(()=>{remaining--;update();if(remaining<=0)end()},1000)};
+document.getElementById('stop').onclick=end;
+target.addEventListener('pointerdown',e=>{if(!running)return;e.preventDefault();score++;beep();update();place()});
+arena.addEventListener('pointerup',e=>{if(!running||document.getElementById('mode').value!=='drag')return;if(e.target!==target){document.getElementById('message').textContent='Try to tap the target accurately.'}});
+</script>
+</body></html>
